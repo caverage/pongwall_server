@@ -2,30 +2,34 @@
 
 import sys
 from array import array
+import time
+from typing import cast
 
 import imageio
 import numpy as np
 
 
 def serpentinize(raw_frame: imageio.core.util.Array, width, height):
-    # FIXME: determine if width or height needs to go first
+    start_time = time.monotonic()
     even_rows = raw_frame[0::2, :]
     odd_rows = raw_frame[1::2, ::-1]
-    frame = np.empty((width, height), dtype=np.uint8)
+    # not all images have an alpha channel
+    frame = np.empty((height, width, raw_frame.shape[2]), dtype=np.uint8)
     frame[0::2] = even_rows
     frame[1::2] = odd_rows
-
+    print("serpentinize: ", (time.monotonic() - start_time) * 1000)
     return frame
 
 
-def make_data(frame: np.ndarray):
-    frame_data = array("B")
-    for row in frame:
-        for pixel in row:
-            # FIXME: this should be better
-            # right now, we strip off the opacity (because it's not part of the data)
-            # and we multiply the percentage opacity against the brightness of the pixel
-            pixel = np.uint8(np.array(pixel[:3] * (pixel[3] / np.uint8(255))))
-            frame_data.append(*pixel)
-    print(type(frame_data))
+def make_data(frame: np.ndarray) -> bytes:
+    start_time = time.monotonic()
+
+    if frame.shape[2] == 4:
+        opacity = frame[:, :, 3:] / np.uint8(255)
+        frame = frame[:, :, 0:3] * opacity
+
+    frame_data: bytes
+    frame_data = frame.astype(np.uint8).tobytes()
+    print(f"bytes: {len(frame_data)}")
+    print("make_data: ", (time.monotonic() - start_time) * 1000)
     return frame_data
