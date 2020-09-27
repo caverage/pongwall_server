@@ -20,8 +20,6 @@ NUM_LEDS = MATRIX_WIDTH * MATRIX_HEIGHT
 BYTES_PER_LED = 3
 BYTES_PER_FRAME = NUM_LEDS * BYTES_PER_LED
 
-DEFAULT_FRAMERATE = 24
-
 
 def send_frame(frame_: bytes) -> None:
     start_time = time.monotonic()
@@ -34,18 +32,12 @@ if __name__ == "__main__":
     START_TIME = time.monotonic()
     IMAGE = np.asarray(Image.open(Path(sys.argv[2])))
 
-    frame_rate_search = re.search("-([0-9]*)fps", sys.argv[2])
-    if frame_rate_search:
-        FRAME_RATE = int(frame_rate_search.group(1))
-    else:
-        FRAME_RATE = DEFAULT_FRAMERATE
-        print("oof")
-    TIME_PER_FRAME = 1 / FRAME_RATE
-    print(TIME_PER_FRAME)
-
     FRAME_COUNT = len(IMAGE) / 27
     print("image parse: ", (time.monotonic() - START_TIME) * 1000)
     while True:
+        CURRENT_BPM = float(input())
+        TIME_TO_NEXT_BEAT = time.monotonic() + (60 / CURRENT_BPM)
+        TIME_PER_FRAME = (TIME_TO_NEXT_BEAT - time.monotonic()) / FRAME_COUNT
         for FRAME_NUMBER, NOT_SERPENTINIZED_FRAME in enumerate(
             np.split(IMAGE, FRAME_COUNT)
         ):
